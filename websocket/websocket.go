@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -36,6 +38,36 @@ func NewWebsocket(w http.ResponseWriter, r *http.Request) *Websocket {
 	}
 }
 
+func (ws *Websocket) ReadHeaders() (string, error) {
+	msgType, msg, err := ws.conn.ReadMessage()
+	if err != nil {
+		return "", err
+	}
+
+	switch msgType {
+	case gorilla.TextMessage:
+		var objmap map[string]*json.RawMessage
+		err := json.Unmarshal(msg, &objmap)
+		if err != nil {
+			return "", err
+		}
+
+		_, ok := objmap["name"]
+		if !ok {
+			return "", errors.New("name not found")
+		}
+
+		var name string
+		err = json.Unmarshal(*objmap["name"], &name)
+		if err != nil {
+			return "", errors.New("name failed to unmarshal: " + err.Error())
+		}
+		return name, nil
+	default:
+		return "", errors.New("first message not text, 'ets die")
+	}
+}
+
 func (ws *Websocket) ForwardAudioIntoPipe(pipe *Pipe) {
 	for {
 		// Read message from browser
@@ -51,9 +83,17 @@ func (ws *Websocket) ForwardAudioIntoPipe(pipe *Pipe) {
 		case gorilla.BinaryMessage:
 			pipe.Send(msg)
 		}
+		/*
+			// Write message back to browser
+			if err = ws.conn.WriteMessage(msgType, msg); err != nil {
+				break
+			}*/
+	}
+}
 
-		// Write message back to browser
-		if err = ws.conn.WriteMessage(msgType, msg); err != nil {
+func (ws *Websocket) ForwardTextFromPipe(pipe *Pipe) {
+	for {
+		if err := ws.conn.WriteMessage(gorilla.TextMessage, pipe.Receive()); err != nil {
 			break
 		}
 	}
