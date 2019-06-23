@@ -10,7 +10,7 @@ import spark.Spark;
 public class AnswerController {
 
     private static final String HEROKU_HOST = "meme-streme.herokuapp.com";
-    private static final String GO_APP = "https://lnft.eu:46711/";
+    private static final String GO_APP = "ws://lnft.eu:46711";
 
     public static void main(String[] args) {
         /*
