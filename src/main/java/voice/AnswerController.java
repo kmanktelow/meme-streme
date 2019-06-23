@@ -10,7 +10,7 @@ import spark.Spark;
 public class AnswerController {
 
     private static final String HEROKU_HOST = "meme-streme.herokuapp.com";
-    private static final String GO_APP_HOST = "3772bf9d.ngrok.io";
+    private static final String GO_APP = "https://lnft.eu:46711/";
 
     public static void main(String[] args) {
         /*
@@ -68,7 +68,7 @@ public class AnswerController {
         WebSocketEndpoint endpoint = new WebSocketEndpoint();
         endpoint.setType("websocket");
         endpoint.setContent_type("audio/l16;rate=16000");
-        endpoint.setUri("ws://"+ GO_APP_HOST + "/echo");
+        endpoint.setUri(GO_APP + "/echo");
         endpoint.setHeaders(header);
 
         WebSocketAction action = new WebSocketAction();
