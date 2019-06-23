@@ -15,6 +15,9 @@ python_version = "3.7"
 
 [packages]
 nexmo = "*"
+falcon = "*"
+flask = "*"
+giphy-client = "*"
 
 [pipenv]
 allow_prereleases = true
