@@ -9,7 +9,7 @@ import spark.Spark;
 
 public class AnswerController {
 
-    private static final String THIS_APP_HOST = "ebd3525c.ngrok.io";
+    private static final String HEROKU_HOST = "meme-streme.herokuapp.com";
     private static final String GO_APP_HOST = "3772bf9d.ngrok.io";
 
     public static void main(String[] args) {
@@ -62,7 +62,7 @@ public class AnswerController {
     }
 
     private static Action getWebSocketAction(String user_number) {
-        String callback = "https://" + THIS_APP_HOST +"/asr";
+        String callback = "https://" + HEROKU_HOST +"/asr";
         WebSocketHeader header = new WebSocketHeader(user_number, callback);
 
         WebSocketEndpoint endpoint = new WebSocketEndpoint();
