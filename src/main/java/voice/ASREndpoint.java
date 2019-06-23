@@ -8,6 +8,7 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -28,7 +29,13 @@ public class ASREndpoint {
 
     @OnWebSocketMessage
     public void message(Session session, String message) throws IOException {
-        System.out.println("Got: " + message);
-        session.getRemote().sendString("123");
+        System.out.println("New Text Message Received");
+        session.getRemote().sendString(message);
+    }
+
+    @OnWebSocketMessage
+    public void handleBinaryMessage(Session session, byte[] buffer, int offset, int length) throws IOException {
+        System.out.println("New Binary Message Received");
+        session.getRemote().sendBytes(ByteBuffer.wrap(buffer));
     }
 }

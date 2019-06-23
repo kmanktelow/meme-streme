@@ -69,10 +69,6 @@ public class AnswerController {
             return "";
         };
 
-        Route testRoute = (req, res) -> {
-            return "It is working";
-        };
-
         Spark.port(4000);
         Spark.get("/webhooks/answer", answerRoute);
         Spark.post("/webhooks/event", eventRoute);

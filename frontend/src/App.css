@@ -2,17 +2,83 @@
   font-family: monospace;
 }
 
+header {
+  color: #F64C72;
+  font-size: 20px;
+  display: inline-block;
+}
+
+h1 {
+  border-bottom: 2px solid #F64C72;
+  border-radius: 2px;
+}
+
 body {
-  background: #EDF5E1;
+  /* background: #EDF5E1; */
+  margin: 0;
+  padding: 0;
+  overflow-y: hidden; 
+}
+
+.main {
+  display: flex;
+}
+
+.sidebar {
+  flex: 0 0 270px;
+  width: 270px;
+  background: #242582;
+  color: white;
+  padding: 20px;
+  height: 100vh;
+}
+
+.content {
+  flex: 1;
+  padding: 0 20px;
 }
 
 .conversation {
-  max-width: 1200px;
-  width: 100%;
   background: white;
   border-radius: 4px;
   margin: 0 auto;
-  height: calc(100% - 120px);
+  padding: 20px;
+  display: flex;
+}
+
+.conversation div img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 20px;
+  margin-top: 5px;
+  margin-bottom: 20px;
+  display: flex;
+}
+
+.conversation--yours {
+  justify-content: flex-end;
+}
+
+.conversation--others {
+  justify-content: flex-start;
+}
+
+.others {
+  justify-content: start;
+}
+
+.others img {
+  margin-left: 20px;
+}
+
+.yours {
+  justify-content: end;
+  text-align: right;
+}
+
+.yours img {
+  margin-right: 20px;
+  width: 200px;
 }
 
 .callButton {
@@ -26,4 +92,27 @@ body {
 
 .callButton:focus, .callButton:active {
   outline: 0;
+}
+
+.badge {
+  background: #2f2fA3;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.date {
+  font-size: 10px;
+  background: rgb(80, 80, 216);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.scroll {
+  overflow-y: scroll;
 }
