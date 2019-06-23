@@ -1,5 +1,7 @@
 import nexmo
 
+import giphy_client
+
 client = nexmo.Client(key="", secret="")
 
 response = client.create_call({
