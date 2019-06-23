@@ -54,7 +54,7 @@ public class AnswerController {
             return "It is working";
         };
 
-        Spark.port(4000);
+        Spark.port(getPort());
         Spark.get("/webhooks/answer", answerRoute);
         Spark.post("/webhooks/event", eventRoute);
         Spark.post("/webhooks/recordings", recordingRoute);
@@ -75,5 +75,15 @@ public class AnswerController {
         action.setAction("connect");
         action.setEndpoint(new WebSocketEndpoint[]{endpoint});
         return action;
+    }
+
+    private static int getPort() {
+        try {
+            System.out.println("port: " + System.getenv("PORT"));
+            return Integer.valueOf(System.getenv("PORT"));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return 4000;
     }
 }
