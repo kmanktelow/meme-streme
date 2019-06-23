@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[[source]]
+url = "https://pip.internal"
+verify_ssl = false
+name = "pipinternal"
+
+[dev-packages]
+
+[requires]
+python_version = "3.7"
+
+[packages]
+nexmo = "*"
+
+[pipenv]
+allow_prereleases = true
