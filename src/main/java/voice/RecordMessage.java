@@ -65,10 +65,14 @@ public class RecordMessage {
             return "";
         };
 
-        Spark.port(3000);
+        Route testRoute = (req, res) -> {
+            return "It is working";
+        };
+
+        Spark.port(4000);
         Spark.get("/webhooks/answer", answerRoute);
         Spark.post("/webhooks/event", eventRoute);
         Spark.post("/webhooks/recordings", recordingRoute);
-
+        Spark.webSocket("/asr", ASREndpoint.class);
     }
 }
