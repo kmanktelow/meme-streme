@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -11,10 +12,11 @@ import (
 )
 
 type ASR struct {
-	stream speechpb.Speech_StreamingRecognizeClient
+	stream   speechpb.Speech_StreamingRecognizeClient
+	username string
 }
 
-func NewASR() *ASR {
+func NewASR(username string) *ASR {
 	ctx := context.Background()
 	client, err := speech.NewClient(ctx)
 	if err != nil {
@@ -27,7 +29,8 @@ func NewASR() *ASR {
 	}
 
 	return &ASR{
-		stream: stream,
+		stream:   stream,
+		username: username,
 	}
 }
 
@@ -67,24 +70,49 @@ func (asr *ASR) Close() {
 	}
 }
 
-func (asr *ASR) PrintResults() {
+type tempResult struct {
+	Transcript     string `json:"transcript"`
+	ConversationID string `json:"conversationID"`
+}
+
+func (asr *ASR) ForwardResults(pipe *Pipe) {
 	for {
 		resp, err := asr.stream.Recv()
 		if err == io.EOF {
 			break
 		}
+
 		if err != nil {
 			log.Fatalf("Cannot stream results: %v", err)
 		}
+
 		if err := resp.Error; err != nil {
 			// Workaround while the API doesn't give a more informative error.
 			if err.Code == 3 || err.Code == 11 {
 				log.Print("WARNING: Speech recognition request exceeded limit of 60 seconds.")
 			}
-			log.Fatalf("Could not recognize: %v", err)
+			log.Fatalf("Could not recognize: %+v", err)
+			break
 		}
+
 		for _, result := range resp.Results {
-			fmt.Printf("Result: %+v\n", result)
+			if len(result.Alternatives) == 0 {
+				continue
+			}
+
+			output := tempResult{
+				Transcript:     result.Alternatives[0].Transcript,
+				ConversationID: asr.username,
+			}
+
+			data, err := json.Marshal(output)
+			if err != nil {
+				log.Printf("error in forward results: ", err)
+				return
+			}
+
+			fmt.Printf("Result: %+v\n", string(data))
+			pipe.Send(data)
 		}
 	}
 }
