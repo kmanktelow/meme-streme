@@ -7,7 +7,7 @@ let client;
 
 let counter = 1;
 
-const badgeColours = [ 'blue', 'green', 'yellow', 'pink', 'purple', 'orange' ];
+const badgeColours = [ 'orange', 'green', 'yellow', 'pink', 'purple', 'blue' ];
 
 export default class App extends React.Component {
   state = {
@@ -20,34 +20,14 @@ export default class App extends React.Component {
   }
 
   componentDidUpdate() {
-    this.scrollToBottom();
+    setTimeout(this.scrollToBottom, 1000);
   }
 
-  getMemes({ transcript, conversationID }) {
-    console.log(`transcript ${transcript}`);
-    console.log(`conversationID ${conversationID}`);
+  getMemes({ transcript, user }) {
     fetch(`/v1/gifs/translate?api_key=L4FOIq94aifdkHfbH0TIWbxEZ7XoOYfK&s=${transcript}`).then(response => {
       response.json().then(res => {
-        let userIndex; 
-      
-        this.state.users.map((user, index) => {
-          if (conversationID === user.name)  {
-            userIndex = index;
-          }
-          return {};
-        });
-        
-        if(!userIndex && userIndex !== 0) {
-          userIndex = this.state.users.length;
-          this.setState({ users: [...this.state.users, { name: conversationID, colour: badgeColours[userIndex], memes: 1 }]});
-        } else {
-          const userUpdate = Array.from(this.state.users);
-          userUpdate[userIndex].memes = userUpdate[userIndex].memes + 1;
-          this.setState({ users: userUpdate });
-        }
-        const user = this.state.users[userIndex];
-        console.log(user);
-        
+        if(res.data.length === 0) return;
+
         counter++;
         this.setState({
           imgs: [...this.state.imgs, { 
@@ -62,31 +42,12 @@ export default class App extends React.Component {
     });
   }
 
-  getStickers({ transcript, conversationID }, url) {
+  getStickers({ transcript, user }, url) {
     fetch(`/v1/stickers/search?api_key=L4FOIq94aifdkHfbH0TIWbxEZ7XoOYfK&q=${transcript.split(' ')[0]}&limit=2`).then(response => {
       response.json().then(res => {
-        counter++;
         if(res.data.length === 0) return;
-
-        let userIndex; 
+        counter++;
         
-        this.state.users.map((user, index) => {
-          if (conversationID === user.name)  {
-            userIndex = index;
-          }
-          return {};
-        });
-      
-        if(!userIndex && userIndex !== 0) {
-          userIndex = this.state.users.length;
-          this.setState({ users: [...this.state.users, { name: conversationID, colour: badgeColours[userIndex], memes: 1 }]});
-        } else {
-          const userUpdate = Array.from(this.state.users);
-          userUpdate[userIndex].memes = userUpdate[userIndex].memes + 1;
-          this.setState({ users: userUpdate });
-        }
-        const user = this.state.users[userIndex];
-        console.log(userIndex);
         this.setState({
           imgs: [...this.state.imgs, { 
             img: res.data[0].images.original.url, 
@@ -100,12 +61,60 @@ export default class App extends React.Component {
     });
   }
 
+  getImages = ({ transcript, conversationID }) => {
+    let userIndex; 
+      
+    this.state.users.map((user, index) => {
+      if (conversationID === user.name)  {
+        userIndex = index;
+      }
+      return {};
+    });
+    let user;
+
+    console.log(userIndex);
+
+    if (! userIndex || userIndex < 0) {     
+      userIndex = this.state.users.length;
+      user = { name: conversationID, colour: badgeColours[userIndex], memes: 1, isMemes: true };
+      this.setState({ users: [...this.state.users, user]});
+      this.getMemes({ transcript, user });
+    } else {
+      user = this.state.users[userIndex];
+
+      const containsSticker = transcript.indexOf("sticker") > -1;
+      const containsMeme = transcript.indexOf("meme") > -1;
+
+      const userUpdate = Array.from(this.state.users);
+
+      if (user.isMemes && !containsSticker) {
+        userUpdate[userIndex].memes = userUpdate[userIndex].memes + 1;
+        this.setState({ users: userUpdate });
+        this.getMemes({ transcript, user });
+      } else if (user.isMemes && containsSticker) {
+        userUpdate[userIndex].memes = userUpdate[userIndex].memes + 1;
+        userUpdate[userIndex].isMemes = false;
+        this.setState({ users: userUpdate });
+        this.getStickers({ transcript, user });
+      } else if (!user.isMemes && containsMeme) {
+        userUpdate[userIndex].memes = userUpdate[userIndex].memes + 1;
+        userUpdate[userIndex].isMemes = true;
+        this.setState({ users: userUpdate });
+        this.getMemes({ transcript, user });
+      } else {
+        userUpdate[userIndex].memes = userUpdate[userIndex].memes + 1;
+        userUpdate[userIndex].isMemes = false;
+        this.getStickers({ transcript, user });
+      }
+    }
+  }
+
   add = () => {
-    this.getStickers({ transcript: 'hello', conversationID: 'Test' });
+    this.getImages({ transcript: 'sticker', conversationID: 'Test' });
   }
 
   addYours = () => {
-    this.getMemes({ transcript: 'it is me', conversationID: 'Joe' });
+    this.getImages({ transcript: 'it is me', conversationID: 'Joe' });
   }
 
   openWebsocket = () => {
@@ -136,11 +145,11 @@ export default class App extends React.Component {
 
   renderImage = (img, index) => {
     return (
-      <div className="conversation">
-        <div key={index}>
+      <div key={index} className="conversation">
+        <div>
           <span className={`badge ${img.user.colour}`}>{img.user.name}</span><br />
           <span className="date">{img.time}</span>
-          <img key={img.id} src={img.img} alt={img.title} width="200" />
+          <img key={img.id} src={img.img} alt={img.title} />
         </div>
       </div>
     )
@@ -151,7 +160,7 @@ export default class App extends React.Component {
   }
 
   renderUsers = () => {
-    return this.state.users.map((user, index) => {
+    return this.state.users.sort((a, b) => b.memes - a.memes).map((user, index) => {
       return (
         <p key={index}>
           <span className={`badge ${user.colour}`}>{user.name}: {user.memes}</span><br />
@@ -169,7 +178,7 @@ export default class App extends React.Component {
               <button onClick={this.add}>Add giphy</button>
               <button onClick={this.addYours}>Add Your giphy</button>
             </header>
-            <div className="scroll">
+            <div className="scroll" ref={(el) => { this.scrollElm = el; }}>
               {this.renderImages()}
               <div style={{ float:"left", clear: "both" }} ref={(el) => { this.messagesEnd = el; }}>
               </div>
