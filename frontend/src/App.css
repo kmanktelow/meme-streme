@@ -11,6 +11,7 @@ header {
 h1 {
   border-bottom: 2px solid #F64C72;
   border-radius: 2px;
+  display: inline-block;
 }
 
 body {
@@ -30,12 +31,14 @@ body {
   background: #242582;
   color: white;
   padding: 20px;
-  height: 100vh;
+  height: 100vh - 40px;
 }
 
 .content {
   flex: 1;
-  padding: 0 20px;
+  padding: 20px;
+  display: flex;
+  flex-flow: column;
 }
 
 .conversation {
@@ -43,7 +46,6 @@ body {
   border-radius: 4px;
   margin: 0 auto;
   padding: 20px;
-  display: flex;
 }
 
 .conversation div img {
@@ -52,33 +54,11 @@ body {
   border-radius: 20px;
   margin-top: 5px;
   margin-bottom: 20px;
-  display: flex;
+  display: block;
 }
 
-.conversation--yours {
-  justify-content: flex-end;
-}
-
-.conversation--others {
-  justify-content: flex-start;
-}
-
-.others {
-  justify-content: start;
-}
-
-.others img {
+.meme img {
   margin-left: 20px;
-}
-
-.yours {
-  justify-content: end;
-  text-align: right;
-}
-
-.yours img {
-  margin-right: 20px;
-  width: 200px;
 }
 
 .callButton {
@@ -95,12 +75,19 @@ body {
 }
 
 .badge {
-  background: #2f2fA3;
   color: white;
   padding: 3px 8px;
   border-radius: 20px;
   font-size: 12px;
   display: inline-block;
+}
+
+.badge.blue {
+  background: #2f2fA3;
+}
+
+.badge.green {
+  background: #41B3A3;
 }
 
 .date {
@@ -115,4 +102,5 @@ body {
 
 .scroll {
   overflow-y: scroll;
+  height: calc(100vh - 120px);
 }

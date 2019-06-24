@@ -1,6 +1,5 @@
 import React from 'react';
 import './App.css';
-import axios from 'axios';
 import { format } from 'date-fns';
 
 let client;
@@ -8,61 +7,101 @@ let client;
 
 let counter = 1;
 
+const badgeColours = [ 'blue', 'green', 'yellow', 'pink', 'purple', 'orange' ];
+
 export default class App extends React.Component {
   state = {
     imgs: [],
-    callJoined: false,
-    numberOfGifs: 0,
-    numberOfStickers: 0,
-    totalGifCount: 0
+    users:[],
   };
 
   componentDidMount() {
     // this.openWebsocket();
   }
 
+  componentDidUpdate() {
+    this.scrollToBottom();
+  }
+
   getMemes({ transcript, conversationID }) {
     console.log(`transcript ${transcript}`);
     console.log(`conversationID ${conversationID}`);
-    axios.get(`https://api.giphy.com/v1/gifs/translate?api_key=L4FOIq94aifdkHfbH0TIWbxEZ7XoOYfK&s=${transcript}`).then(res => {
-      counter++;
-      this.setState({
-        imgs: [...this.state.imgs, { 
-          img: res.data.data.images.original.url, 
-          time: format(new Date(), 'HH:ss'), 
-          user: conversationID, 
-          you: false,
-          id: `image-${counter}`,
-          title: res.data.data.title 
-        }],
-        numberOfStickers: this.state.numberOfStickers + 1,
-        totalGifCount: this.state.totalGifCount + 1
+    fetch(`/v1/gifs/translate?api_key=L4FOIq94aifdkHfbH0TIWbxEZ7XoOYfK&s=${transcript}`).then(response => {
+      response.json().then(res => {
+        let userIndex; 
+      
+        this.state.users.map((user, index) => {
+          if (conversationID === user.name)  {
+            userIndex = index;
+          }
+          return {};
+        });
+        
+        if(!userIndex && userIndex !== 0) {
+          userIndex = this.state.users.length;
+          this.setState({ users: [...this.state.users, { name: conversationID, colour: badgeColours[userIndex], memes: 1 }]});
+        } else {
+          const userUpdate = Array.from(this.state.users);
+          userUpdate[userIndex].memes = userUpdate[userIndex].memes + 1;
+          this.setState({ users: userUpdate });
+        }
+        const user = this.state.users[userIndex];
+        console.log(user);
+        
+        counter++;
+        this.setState({
+          imgs: [...this.state.imgs, { 
+            img: res.data.images.original.url, 
+            time: format(new Date(), 'HH:ss'), 
+            user, 
+            id: `image-${counter}`,
+            title: res.data.title 
+          }],
+        });
       });
     });
   }
 
-  getStickers({ transcript, conversationID }) {
-    axios.get(`https://api.giphy.com/v1/stickers/search?api_key=L4FOIq94aifdkHfbH0TIWbxEZ7XoOYfK&q=${transcript.split(' ')[0]}&limit=2`).then(res => {
-      counter++;
-      console.log(res.data.data);
-      if(res.data.data.length === 0) return;
-      this.setState({
-        imgs: [...this.state.imgs, { 
-          img: res.data.data[0].images.original.url, 
-          time: format(new Date(), 'HH:ss'), 
-          user: conversationID, 
-          you: true,
-          id: `image-${counter}`,
-          title: res.data.data[0].title 
-        }],
-        numberOfStickers: this.state.numberOfStickers + 1,
-        totalGifCount: this.state.totalGifCount + 1
-      });
+  getStickers({ transcript, conversationID }, url) {
+    fetch(`/v1/stickers/search?api_key=L4FOIq94aifdkHfbH0TIWbxEZ7XoOYfK&q=${transcript.split(' ')[0]}&limit=2`).then(response => {
+      response.json().then(res => {
+        counter++;
+        if(res.data.length === 0) return;
+
+        let userIndex; 
+        
+        this.state.users.map((user, index) => {
+          if (conversationID === user.name)  {
+            userIndex = index;
+          }
+          return {};
+        });
+      
+        if(!userIndex && userIndex !== 0) {
+          userIndex = this.state.users.length;
+          this.setState({ users: [...this.state.users, { name: conversationID, colour: badgeColours[userIndex], memes: 1 }]});
+        } else {
+          const userUpdate = Array.from(this.state.users);
+          userUpdate[userIndex].memes = userUpdate[userIndex].memes + 1;
+          this.setState({ users: userUpdate });
+        }
+        const user = this.state.users[userIndex];
+        console.log(userIndex);
+        this.setState({
+          imgs: [...this.state.imgs, { 
+            img: res.data[0].images.original.url, 
+            time: format(new Date(), 'HH:ss'), 
+            user,
+            id: `image-${counter}`,
+            title: res.data[0].title 
+          }],
+        });
+      }); 
     });
   }
 
   add = () => {
-    this.getStickers({ transcript: 'another test', conversationID: 'Joe' });
+    this.getStickers({ transcript: 'hello', conversationID: 'Test' });
   }
 
   addYours = () => {
@@ -82,8 +121,9 @@ export default class App extends React.Component {
       const parsedEvent = JSON.parse(event.data);
 
       console.log(parsedEvent);
-      if (event.data instanceof ArrayBuffer) {
-        this.getMemes(parsedEvent)
+
+      if (parsedEvent.transcript.contains('stickers')) {
+        this.getStickers(parsedEvent)
       } else {
         this.getMemes(parsedEvent);
       }
@@ -95,59 +135,56 @@ export default class App extends React.Component {
   }
 
   renderImage = (img, index) => {
-    if (img.you) {
-      return (
-        <div className="conversation conversation--yours">
-          <div className="yours" key={index}>
-            <span className="badge">You</span><br />
-            <span className="date">{img.time}</span>
-            <img key={img.id} src={img.img} alt={img.title} width="200" />
-          </div>
+    return (
+      <div className="conversation">
+        <div key={index}>
+          <span className={`badge ${img.user.colour}`}>{img.user.name}</span><br />
+          <span className="date">{img.time}</span>
+          <img key={img.id} src={img.img} alt={img.title} width="200" />
         </div>
-      )
-    } else {
-      return (
-        <div className="conversation conversation--others">
-          <div className="others" key={index}>
-            <div className="badge">{img.user}</div><br />
-            <div className="date">{img.time}</div>
-            <img key={img.id} src={img.img} alt={img.title} width="200" />
-          </div>
-        </div>
-      )
-    } 
+      </div>
+    )
   }
 
   renderImages = () => {
     return this.state.imgs.map(this.renderImage);
   }
 
+  renderUsers = () => {
+    return this.state.users.map((user, index) => {
+      return (
+        <p key={index}>
+          <span className={`badge ${user.colour}`}>{user.name}: {user.memes}</span><br />
+        </p>
+      );
+    });
+  }
+
   renderScreen = () => {
-    // if (! this.state.callJoined) {
-    //   return (
-    //     <div>
-    //       <button className="callButton" onClick={this.joinCall}>Join call</button>
-    //     </div>
-    //   )
-    // } else {
       return (
         <div className="main">
           <div className="content">
-            <header><h1>MemeStreme</h1></header>
-            {/* <button className="callButton" onClick={this.leaveCall}>Leave call</button> */}
-            <button onClick={this.add}>Add giphy</button>
-            <button onClick={this.addYours}>Add Your giphy</button>
+            <header>
+              <h1>MemeStreme</h1>
+              <button onClick={this.add}>Add giphy</button>
+              <button onClick={this.addYours}>Add Your giphy</button>
+            </header>
             <div className="scroll">
               {this.renderImages()}
+              <div style={{ float:"left", clear: "both" }} ref={(el) => { this.messagesEnd = el; }}>
+              </div>
             </div>
           </div>
           <div className="sidebar">
-            <div><p>You have sent {this.state.numberOfGifs} gifs</p></div>
-            <div><p>Total number of gifs send {this.state.totalGifCount}</p></div>
+            <p>Users in the conversation:</p>
+            {this.renderUsers()}
           </div>
         </div>
       )
-    // }
+  }
+
+  scrollToBottom = () => {
+    this.messagesEnd.scrollIntoView({ behavior: "smooth" });
   }
 
   render () {
