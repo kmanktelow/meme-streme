@@ -91,6 +91,10 @@ body {
   background: #41B3A3;
 }
 
+.badge.yellow {
+  background: #b5b545;
+}
+
 .date {
   font-size: 10px;
   background: rgb(80, 80, 216);

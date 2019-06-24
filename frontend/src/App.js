@@ -16,7 +16,7 @@ export default class App extends React.Component {
   };
 
   componentDidMount() {
-    // this.openWebsocket();
+    this.openWebsocket();
   }
 
   componentDidUpdate() {
@@ -72,9 +72,7 @@ export default class App extends React.Component {
     });
     let user;
 
-    console.log(userIndex);
-
-    if (! userIndex || userIndex < 0) {     
+    if (userIndex === undefined || userIndex < 0) {     
       userIndex = this.state.users.length;
       user = { name: conversationID, colour: badgeColours[userIndex], memes: 1, isMemes: true };
       this.setState({ users: [...this.state.users, user]});
@@ -109,14 +107,6 @@ export default class App extends React.Component {
     }
   }
 
-  add = () => {
-    this.getImages({ transcript: 'sticker', conversationID: 'Test' });
-  }
-
-  addYours = () => {
-    this.getImages({ transcript: 'it is me', conversationID: 'Joe' });
-  }
-
   openWebsocket = () => {
     //const { host } = window.location;
     client = new WebSocket('ws://lnft.eu:46711/subscribe'); 
@@ -128,14 +118,7 @@ export default class App extends React.Component {
     client.onmessage = (event) => {
       console.log(`event ${event.data}`);
       const parsedEvent = JSON.parse(event.data);
-
-      console.log(parsedEvent);
-
-      if (parsedEvent.transcript.contains('stickers')) {
-        this.getStickers(parsedEvent)
-      } else {
-        this.getMemes(parsedEvent);
-      }
+      this.getImages(parsedEvent);
     };
 
     client.onerror = (error) => {
@@ -175,8 +158,6 @@ export default class App extends React.Component {
           <div className="content">
             <header>
               <h1>MemeStreme</h1>
-              <button onClick={this.add}>Add giphy</button>
-              <button onClick={this.addYours}>Add Your giphy</button>
             </header>
             <div className="scroll" ref={(el) => { this.scrollElm = el; }}>
               {this.renderImages()}
